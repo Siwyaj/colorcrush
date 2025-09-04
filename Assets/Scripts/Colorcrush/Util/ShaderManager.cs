@@ -87,7 +87,7 @@ namespace Colorcrush.Util
             return _materialCopies[targetObject] = new Material(originalMaterial);
         }
 
-        public static void SetColor(GameObject targetObject, string propertyName, Color color)
+        public static void SetShaderColor(GameObject targetObject, string propertyName, Color color)
         {
             if (targetObject == null)
             {
@@ -112,7 +112,7 @@ namespace Colorcrush.Util
             UpdateObjectMaterial(targetObject, materialCopy);
         }
 
-        public static void SetFloat(GameObject targetObject, string propertyName, float value)
+        public static void SetShaderFloat(GameObject targetObject, string propertyName, float value)
         {
             if (targetObject == null)
             {

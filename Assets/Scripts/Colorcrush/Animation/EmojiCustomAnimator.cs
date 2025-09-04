@@ -49,7 +49,7 @@ namespace Colorcrush.Animation
             {
                 if (material != null)
                 {
-                    ShaderManager.SetFloat(gameObject, "_Alpha", opacity);
+                    ShaderManager.SetShaderFloat(gameObject, "_Alpha", opacity);
                 }
             });
         }
@@ -101,7 +101,7 @@ namespace Colorcrush.Animation
             {
                 if (material != null)
                 {
-                    ShaderManager.SetFloat(gameObject, "_FillScale", fillScale);
+                    ShaderManager.SetShaderFloat(gameObject, "_FillScale", fillScale);
                 }
             });
         }

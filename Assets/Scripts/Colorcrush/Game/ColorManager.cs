@@ -24,37 +24,37 @@ namespace Colorcrush.Game
             XYZ,
             Xyy,
         }
-
-        // Conversion matrices
-
-        // CIE XYZ to sRGB matrix
+        
+        // CIE XYZ → sRGB
+        // NOTE: Transposed from Excel version since the constructor takes arguments as columns and not rows
         private static Matrix4x4 _xyzToSrgb = new(
-            new Vector4(3.174569687f, -1.437132245f, -0.533239074f, 0f),
-            new Vector4(-0.978559662f, 1.851015357f, 0.0734006f, 0f),
-            new Vector4(0.071795226f, -0.224002081f, 1.061208354f, 0f),
-            new Vector4(0f, 0f, 0f, 1f)
+            new Vector4( 3.174569687f,  -0.978559662f,   0.071795226f, 0f),
+            new Vector4(-1.437132245f,   1.851015357f,  -0.224002081f, 0f),
+            new Vector4(-0.533239074f,   0.073400600f,   1.061208354f, 0f),
+            new Vector4( 0f,             0f,             0f,           1f)
         );
 
-        // sRGB to XYZ matrix
+        // sRGB → CIE XYZ is just the inverse
         private static Matrix4x4 _srgbToXYZ = _xyzToSrgb.inverse;
 
-        // sRGB to Display P3 matrix
+        // sRGB → Display P3
+        // NOTE: Transposed from Excel version since the constructor takes arguments as columns and not rows
         private static readonly Matrix4x4 SrgbToDisplayP3 = new(
-            new Vector4(0.8225f, 0.1774f, 0f, 0f),
-            new Vector4(0.0332f, 0.9669f, 0f, 0f),
-            new Vector4(0.0171f, 0.0724f, 0.9108f, 0f),
-            new Vector4(0f, 0f, 0f, 1f)
+            new Vector4( 0.8225f,  0.0332f,  0.0171f, 0f),
+            new Vector4( 0.1774f,  0.9669f,  0.0724f, 0f),
+            new Vector4( 0.0000f,  0.0000f,  0.9108f, 0f),
+            new Vector4( 0f,       0f,       0f,      1f)
         );
 
-        // Display P3 to sRGB matrix (inverse of SRGBToDisplayP3)
-        private static readonly Matrix4x4 DisplayP3TosRGB = SrgbToDisplayP3.inverse;
+        // Display P3 → sRGB is the inverse
+        private static readonly Matrix4x4 DisplayP3ToSrgb = SrgbToDisplayP3.inverse;
 
         // Display P3 to XYZ matrix
-        private static Matrix4x4 _displayP3ToXYZ = _srgbToXYZ * DisplayP3TosRGB;
-
+        private static Matrix4x4 _displayP3ToXYZ = _srgbToXYZ * DisplayP3ToSrgb;
+        
         // XYZ to Display P3 matrix
         private static Matrix4x4 _xyzToDisplayP3 = SrgbToDisplayP3 * _xyzToSrgb;
-
+        
         private static Color[] _targetColors;
         public static bool ApplyGammaCorrection => true;
         public static ColorExperiment CurrentColorExperiment { get; private set; }

@@ -11,6 +11,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using static Colorcrush.Animation.AnimationManager;
+using static Colorcrush.Util.AudioManager;
+using static Colorcrush.Util.ShaderManager;
 
 #endregion
 
@@ -166,7 +169,7 @@ namespace Colorcrush.Game
             if (elapsedTime >= (enableEmojiShuffle ? 3.0f : 0f))
             {
                 _circleSize += Time.deltaTime * expandSpeed;
-                ShaderManager.SetFloat(foregroundImage.gameObject, "_CircleSize", _circleSize);
+                SetShaderFloat(foregroundImage.gameObject, "_CircleSize", _circleSize);
             }
 
             UpdateColorspaceInfo();
@@ -210,7 +213,7 @@ namespace Colorcrush.Game
             {
                 yield return new WaitForSeconds(shakeInterval);
                 var animatorsList = new List<CustomAnimator>(_animators);
-                AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(shakeDuration, shakeStrength, shakeVibrato));
+                PlayAnimation(animatorsList, new ShakeAnimation(shakeDuration, shakeStrength, shakeVibrato));
             }
         }
 
@@ -222,7 +225,7 @@ namespace Colorcrush.Game
             titleText.text = originalText + ":";
             if (enableSmileySound)
             {
-                AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+                PlaySound(smileySound, pitchShift: smileyColonPitchShift);
             }
 
             yield return new WaitForSeconds(delayBetweenCharacters);
@@ -230,14 +233,14 @@ namespace Colorcrush.Game
             titleText.text = originalText + ":)";
             if (enableSmileySound)
             {
-                AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+                PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
             }
         }
 
         private IEnumerator PlaySoundAfterDelay()
         {
             yield return new WaitForSeconds(enableEmojiShuffle ? 3f : 0f);
-            AudioManager.PlaySound(initialDelaySound, pitchShift: initialDelayPitchShift, gain: initialDelayGain);
+            PlaySound(initialDelaySound, pitchShift: initialDelayPitchShift, gain: initialDelayGain);
         }
 
         public void OnStartButtonClicked()
@@ -359,7 +362,7 @@ namespace Colorcrush.Game
             var elapsedTime = 0f;
             var startScale = _targetImage.transform.localScale;
 
-            AudioManager.PlaySound(emojiBumpSound, pitchShift: emojiBumpPitchShift, gain: emojiBumpGain);
+            PlaySound(emojiBumpSound, pitchShift: emojiBumpPitchShift, gain: emojiBumpGain);
 
             while (elapsedTime < bumpDuration / 2)
             {
@@ -396,7 +399,7 @@ namespace Colorcrush.Game
             // Set the emoji color
             if (_targetImage != null)
             {
-                ShaderManager.SetColor(_targetImage.gameObject, "_TargetColor", selectedColor);
+                SetShaderColor(_targetImage.gameObject, "_TargetColor", selectedColor);
             }
 
             // Set the text color to a contrasting color

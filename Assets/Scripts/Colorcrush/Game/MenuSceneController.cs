@@ -9,8 +9,12 @@ using System.Linq;
 using Colorcrush.Animation;
 using Colorcrush.Util;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
+using static Colorcrush.Animation.AnimationManager;
 using static Colorcrush.Game.ColorManager;
+using static Colorcrush.Util.AudioManager;
+using static Colorcrush.Util.ShaderManager;
 
 #endregion
 
@@ -74,14 +78,14 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
         private Canvas uiCanvas;
 
-        [SerializeField] [Tooltip("Preset amount of units for tick sound. The distance the ColorView inspector must be dragged before a tick sound is played.")]
-        private float TickDistanceThreshold = 50f;
+        [FormerlySerializedAs("TickDistanceThreshold")] [SerializeField] [Tooltip("Preset amount of units for tick sound. The distance the ColorView inspector must be dragged before a tick sound is played.")]
+        private float tickDistanceThreshold = 50f;
 
-        [SerializeField] [Tooltip("Minimum interval between tick sounds in seconds. Set this to prevent spamming of the tick sound.")]
-        private float MinTickInterval = 0.065f;
+        [FormerlySerializedAs("MinTickInterval")] [SerializeField] [Tooltip("Minimum interval between tick sounds in seconds. Set this to prevent spamming of the tick sound.")]
+        private float minTickInterval = 0.065f;
 
-        [SerializeField] [Tooltip("Maximum pitch shift value. How much the pitch of the tick sound is shifted up when dragging quickly.")]
-        private float MaxPitchShift = 1.5f;
+        [FormerlySerializedAs("MaxPitchShift")] [SerializeField] [Tooltip("Maximum pitch shift value. How much the pitch of the tick sound is shifted up when dragging quickly.")]
+        private float maxPitchShift = 1.5f;
 
         [SerializeField] [Tooltip("The drag signifier object.")]
         private GameObject dragSignifier;
@@ -232,7 +236,7 @@ namespace Colorcrush.Game
                     _tapCount = 0;
                     ProjectConfig.InstanceConfig.useSkinColorMode = !ProjectConfig.InstanceConfig.useSkinColorMode;
 
-                    AudioManager.PlaySound("MENU B_Select");
+                    PlaySound("MENU B_Select");
 
                     // Update the shader on all buttons to reflect the change in useSkinColorMode
                     var buttons = FindObjectsOfType<Button>();
@@ -244,7 +248,7 @@ namespace Colorcrush.Game
                             var material = image.material;
                             if (material != null && material.shader.name == "Colorcrush/ColorTransposeShader")
                             {
-                                ShaderManager.SetFloat(button.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
+                                SetShaderFloat(button.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
                             }
                         }
                     }
@@ -277,7 +281,7 @@ namespace Colorcrush.Game
             _selectedLevelIndex = -1;
             OnButtonClicked(0);
             UpdateSubmitButton();
-            AudioManager.PlaySound("MENU B_Select");
+            PlaySound("MENU B_Select");
         }
 
         private void HandleColorViewInspector()
@@ -296,7 +300,7 @@ namespace Colorcrush.Game
                     var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
                     if (submitButtonAnimator != null)
                     {
-                        AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
+                        PlayAnimation(submitButtonAnimator, bumpAnimation);
                     }
                     else
                     {
@@ -310,7 +314,7 @@ namespace Colorcrush.Game
                 {
                     if (!ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor)))
                     {
-                        AudioManager.PlaySound("MENU B_Back");
+                        PlaySound("MENU B_Back");
                         return;
                     }
 
@@ -325,7 +329,7 @@ namespace Colorcrush.Game
                     // Hide other UI elements
                     SetUIElementsActive(false);
 
-                    AudioManager.PlaySound("MENU B_Select");
+                    PlaySound("MENU B_Select");
                     _lastDragPosition = Input.mousePosition;
                     _distanceSinceLastTick = 0f;
                     _lastTickTime = Time.time;
@@ -352,7 +356,7 @@ namespace Colorcrush.Game
                 // Show other UI elements
                 SetUIElementsActive(true);
 
-                AudioManager.PlaySound("MENU B_Back");
+                PlaySound("MENU B_Back");
             }
 
             if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
@@ -383,14 +387,14 @@ namespace Colorcrush.Game
                     _distanceSinceLastTick += distanceMoved;
 
                     // Check if the distance threshold is met and the minimum interval has passed
-                    if (_distanceSinceLastTick >= TickDistanceThreshold && Time.time - _lastTickTime >= MinTickInterval)
+                    if (_distanceSinceLastTick >= tickDistanceThreshold && Time.time - _lastTickTime >= minTickInterval)
                     {
                         // Calculate pitch shift based on speed (logarithmic scaling)
                         var speed = distanceMoved / Time.deltaTime;
-                        var pitchShift = Mathf.Lerp(1.0f, MaxPitchShift, Mathf.Log10(speed + 1) / Mathf.Log10(1000 + 1));
+                        var pitchShift = Mathf.Lerp(1.0f, maxPitchShift, Mathf.Log10(speed + 1) / Mathf.Log10(1000 + 1));
 
                         // Play tick sound with pitch shift
-                        AudioManager.PlaySound("click_2", 0.5f, pitchShift);
+                        PlaySound("click_2", 0.5f, pitchShift);
 
                         // Reset distance and update last tick time
                         _distanceSinceLastTick = 0f;
@@ -446,7 +450,7 @@ namespace Colorcrush.Game
             if (compareView != null)
             {
                 var go = compareView.GetComponent<Image>();
-                ShaderManager.SetColor(go.gameObject, "_Circle1Color", finalColor);
+                SetShaderColor(go.gameObject, "_Circle1Color", finalColor);
             }
         }
 
@@ -458,7 +462,7 @@ namespace Colorcrush.Game
             if (compareView != null)
             {
                 var go = compareView.GetComponent<Image>();
-                ShaderManager.SetColor(go.gameObject, "_Circle2Color", finalColor);
+                SetShaderColor(go.gameObject, "_Circle2Color", finalColor);
             }
         }
 
@@ -737,13 +741,13 @@ namespace Colorcrush.Game
                 var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || (isNextColor && nextColorIndex != -1);
 
                 // Set button properties
-                ShaderManager.SetColor(buttonInstance, "_TargetColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
-                ShaderManager.SetColor(buttonInstance, "_OriginalColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
+                SetShaderColor(buttonInstance, "_TargetColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
+                SetShaderColor(buttonInstance, "_OriginalColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
 
                 // Set button interactability and appearance
                 button.interactable = shouldBeEnabled;
-                ShaderManager.SetFloat(buttonInstance, "_Alpha", shouldBeEnabled ? 1f : 0.2f);
-                ShaderManager.SetFloat(buttonInstance, "_FillScale", 1f); // Set initial fill scale
+                SetShaderFloat(buttonInstance, "_Alpha", shouldBeEnabled ? 1f : 0.2f);
+                SetShaderFloat(buttonInstance, "_FillScale", 1f); // Set initial fill scale
 
                 // Set button scale
                 buttonInstance.transform.localScale = Vector3.one * (shouldBeEnabled ? 1f : selectedButtonScale);
@@ -860,12 +864,12 @@ namespace Colorcrush.Game
                 if (_selectedLevelIndex != buttonIndex)
                 {
                     var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
-                    AnimationManager.PlayAnimation(animator, bumpAnimation);
+                    PlayAnimation(animator, bumpAnimation);
 
                     yield return new WaitForSeconds(buttonBumpDuration);
 
                     var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
-                    AnimationManager.PlayAnimation(animator, shakeAnimation);
+                    PlayAnimation(animator, shakeAnimation);
                 }
             }
         }
@@ -929,7 +933,7 @@ namespace Colorcrush.Game
                 if (submitButtonAnimator != null)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
-                    AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
+                    PlayAnimation(submitButtonAnimator, bumpAnimation);
                 }
                 else
                 {
@@ -937,7 +941,7 @@ namespace Colorcrush.Game
                 }
             }
 
-            AudioManager.PlaySound("MENU_Pick", pitchShift: 1.85f);
+            PlaySound("MENU_Pick", pitchShift: 1.85f);
         }
 
         private void ScaleButton(Transform buttonTransform, float targetScale)
@@ -946,7 +950,7 @@ namespace Colorcrush.Game
             if (animator != null)
             {
                 var scaleAnimation = new FillScaleAnimation(targetScale, buttonBumpDuration);
-                AnimationManager.PlayAnimation(animator, scaleAnimation);
+                PlayAnimation(animator, scaleAnimation);
             }
             else
             {
@@ -967,16 +971,16 @@ namespace Colorcrush.Game
                     if (isNewLevel)
                     {
                         // Set colors for a new level
-                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", newLevelColor);
-                        ShaderManager.SetColor(buttonImage.gameObject, "_AccentColor", newLevelAccentColor);
-                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 1f);
+                        SetShaderColor(buttonImage.gameObject, "_BackgroundColor", newLevelColor);
+                        SetShaderColor(buttonImage.gameObject, "_AccentColor", newLevelAccentColor);
+                        SetShaderFloat(buttonImage.gameObject, "_EffectToggle", 1f);
                         UpdateSubmitIcon("Colorcrush/Icons/icons8-advance-90");
                     }
                     else
                     {
                         // Set colors for a completed level
-                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", completedLevelColor);
-                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 0f);
+                        SetShaderColor(buttonImage.gameObject, "_BackgroundColor", completedLevelColor);
+                        SetShaderFloat(buttonImage.gameObject, "_EffectToggle", 0f);
                         UpdateSubmitIcon("Colorcrush/Icons/icons8-undo-90");
                     }
                 }
@@ -1024,7 +1028,7 @@ namespace Colorcrush.Game
             if (animator != null)
             {
                 var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
-                AnimationManager.PlayAnimation(animator, bumpAnimation);
+                PlayAnimation(animator, bumpAnimation);
             }
             else
             {
@@ -1034,7 +1038,7 @@ namespace Colorcrush.Game
             // Wait for 1 second before loading the scene
             StartCoroutine(LoadSceneAfterDelay(0.1f));
 
-            AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
+            PlaySound("misc_menu", pitchShift: 1.15f);
         }
 
         private IEnumerator LoadSceneAfterDelay(float delay)
@@ -1109,7 +1113,7 @@ namespace Colorcrush.Game
 
         private void SetDragSignifierActive(bool isActive)
         {
-            ShaderManager.SetFloat(colorAnalysisImage.gameObject, "_PulseEffect", isActive ? 1 : 0);
+            SetShaderFloat(colorAnalysisImage.gameObject, "_PulseEffect", isActive ? 1 : 0);
             var dragSignifierAnimator = dragSignifier.GetComponent<Animator>();
             dragSignifierAnimator.enabled = isActive;
             var dragSignifierImage = dragSignifier.GetComponent<Image>();
@@ -1142,14 +1146,14 @@ namespace Colorcrush.Game
                         var t = Mathf.Clamp01(axisElapsedTime / colorAnalysisAnimationDuration);
                         var easedT = EaseInOutCubic(t);
                         _currentAxisValues[i] = Mathf.Lerp(startValues[i], targetValues[i], easedT);
-                        ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
+                        SetShaderFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
                     }
                 }
 
                 var colorT = Mathf.Clamp01(elapsedTime / colorAnalysisAnimationDuration);
                 var easedColorT = EaseInOutCubic(colorT);
                 _currentFillColor = Color.Lerp(startColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f), easedColorT);
-                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
+                SetShaderColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
 
                 yield return null;
             }
@@ -1158,11 +1162,11 @@ namespace Colorcrush.Game
             for (var i = 0; i < 8; i++)
             {
                 _currentAxisValues[i] = targetValues[i];
-                ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
+                SetShaderFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
             }
 
             _currentFillColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f);
-            ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
+            SetShaderColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
         }
 
         private static float EaseInOutCubic(float t)
