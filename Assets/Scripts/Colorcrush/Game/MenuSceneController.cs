@@ -205,7 +205,10 @@ namespace Colorcrush.Game
             }
             else
             {
-                resetProgressButton.gameObject.SetActive(false);
+                resetProgressButton.gameObject.SetActive(true);
+                resetProgressButton.onClick.RemoveAllListeners(); // Clear any existing listeners first
+                resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
+                SceneManager.LoadSceneAsync("StartScene");
             }
         }
 
@@ -282,6 +285,7 @@ namespace Colorcrush.Game
             OnButtonClicked(0);
             UpdateSubmitButton();
             PlaySound("MENU B_Select");
+            
         }
 
         private void HandleColorViewInspector()

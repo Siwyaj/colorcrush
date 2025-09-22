@@ -28,6 +28,7 @@ namespace Colorcrush.Util
         private static readonly Dictionary<int, string> _generatedColors = new();
         private static readonly List<string> _currentLevelSelectedColors = new();
 
+        
         public static List<string> CompletedTargetColors
         {
             get

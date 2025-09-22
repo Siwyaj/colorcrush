@@ -564,7 +564,7 @@ MonoBehaviour:
   titleText: {fileID: 724237949}
   versionText: {fileID: 1979448836}
   debugColorspaceInfoText: {fileID: 1799598394}
-  freshStartupScene: MenuScene
+  freshStartupScene: TutorialScene
   recurringStartupScene: MenuScene
   initialDelay: 5.5
   delayBetweenCharacters: 0.5
