@@ -22,7 +22,7 @@ public class MoveCursor : MonoBehaviour
     private void FixedUpdate()
     {
         currentTime = Time.time;
-        Debug.Log(currentTime - startTime);
+        //Debug.Log(currentTime - startTime);
         if (Mathf.Abs(currentTime - startTime) > timeInterval)
         {
             index += 1;

@@ -16,7 +16,6 @@ using static Colorcrush.Animation.AnimationManager;
 using static Colorcrush.Game.ColorManager;
 using static Colorcrush.Util.AudioManager;
 using static Colorcrush.Util.ShaderManager;
-
 #endregion
 
 namespace Colorcrush.Game
@@ -370,6 +369,7 @@ namespace Colorcrush.Game
             }
 
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
+
         }
 
         public void OnButtonClicked(int index)

@@ -16,6 +16,7 @@ namespace Colorcrush.Util
 {
     public class ProgressManager : MonoBehaviour
     {
+        private static int UserID = -1;
         private static ProgressManager _instance;
         private static readonly Queue<ILogEvent> LogEventQueue = new();
         private static readonly List<string> _completedTargetColors = new();

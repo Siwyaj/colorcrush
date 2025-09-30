@@ -7,7 +7,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+//using Unity.VisualScripting.YamlDotNet.Core.Tokens;
+//using UnityEditor.VersionControl;
 using UnityEngine;
+using UnityEngine.Networking;
 
 // ReSharper disable StringLiteralTypo
 
@@ -216,11 +219,49 @@ namespace Colorcrush.Logging
         {
             while (true)
             {
-                yield return new WaitForSeconds(ProjectConfig.InstanceConfig.logSaveInterval);
+                yield return new WaitForSeconds(2f);
                 SaveLog();
             }
         }
+        private string webhookUrl = "https://webhook.site/2b571ca0-d99c-45b2-b5e3-f9a1e7ca300d";
+        long timestamp;
+        ILogEvent logEvent;
+        string messageToSend="";
+        public void LogColorTrial(List<string> log)
+        {
+            Debug.Log("before json" + log);
+            //string json = JsonUtility.ToJson(log);
+            //Debug.Log("Sending log to server: " + json);
 
+            string messageToSend = string.Join("\n", log);
+            Debug.Log("Sending log to server:\n" + messageToSend);
+
+            StartCoroutine(SendData(messageToSend));
+        }
+
+
+        private IEnumerator SendData(string json)
+        {
+            using (UnityWebRequest www = new UnityWebRequest(webhookUrl, "POST"))
+            {
+                byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
+                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                www.downloadHandler = new DownloadHandlerBuffer();
+                www.SetRequestHeader("Content-Type", "application/json");
+
+                yield return www.SendWebRequest();
+
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError("Error sending data: " + www.error);
+                }
+                else
+                {
+                    Debug.Log("Data sent successfully!");
+                }
+            }
+        }
+        List<string> batch = new();
         private void SaveLog()
         {
             if (_eventQueue.Count == 0)
@@ -237,10 +278,17 @@ namespace Colorcrush.Logging
                     var logEntry = string.IsNullOrEmpty(stringifiedData)
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
+                    batch.Add(logEntry);
+                    
+
+
+                    //SendToServer.LogColorTrial(logEntry);
 
                     _logWriter.WriteLine(logEntry);
                 }
 
+                LogColorTrial(batch);
+                batch.Clear();
                 _logWriter.Flush();
             }
             catch (Exception e)
