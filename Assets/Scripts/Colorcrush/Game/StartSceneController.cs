@@ -27,6 +27,9 @@ namespace Colorcrush.Game
         [Tooltip("TextMeshProUGUI component for displaying the current version of the game.")] [SerializeField]
         private TextMeshProUGUI versionText;
 
+        [Tooltip("Image component for displaying ask for consent popup.")] [SerializeField]
+        private Image consentImage;
+
         [Tooltip("TextMeshProUGUI component for displaying technical information about the color space (used for debugging).")] [SerializeField]
         private TextMeshProUGUI debugColorspaceInfoText;
 
@@ -276,8 +279,14 @@ namespace Colorcrush.Game
             // Set the PlayerPrefs variable expected by GameSceneController
             PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
             PlayerPrefs.Save();
+            Debug.Log("CompletedTargetColors: "+ ProgressManager.CompletedTargetColors.Count);
+            if (ProgressManager.CompletedTargetColors.Count < 1)
+            {
+                Debug.Log("Showing consent image.");
+                consentImage.gameObject.SetActive(true);
+            }
 
-            SceneManager.LoadSceneAsync(ProgressManager.CompletedTargetColors.Count > 0 ? recurringStartupScene : freshStartupScene, SceneManager.ActivateLoadedScene);
+            //SceneManager.LoadSceneAsync(ProgressManager.CompletedTargetColors.Count > 0 ? recurringStartupScene : freshStartupScene, SceneManager.ActivateLoadedScene);
         }
 
         private void InstantiateTargetImage()

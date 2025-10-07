@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "project_number": "799842586127",
+    "firebase_url": "https://color-crush-374a7-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "color-crush-374a7",
+    "storage_bucket": "color-crush-374a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799842586127:ios:c37c80126ced8533f25d7a",
+        "android_client_info": {
+          "package_name": "dk.aau.colorcrush.j"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVoISnBDnX8QEj0bDS3MATN3TveaLrzew"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 0
+        },
+        "appinvite_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

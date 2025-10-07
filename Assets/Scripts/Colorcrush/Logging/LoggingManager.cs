@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Peter Guld Leth
+﻿// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -10,7 +10,9 @@ using System.Linq;
 //using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 //using UnityEditor.VersionControl;
 using UnityEngine;
-using UnityEngine.Networking;
+using Firebase;
+using Firebase.Firestore;
+using Firebase.Extensions;
 
 // ReSharper disable StringLiteralTypo
 
@@ -20,6 +22,11 @@ namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {
+        private FirebaseFirestore _db;
+        private string _participantId;
+
+
+
         public delegate void LogEventQueuedHandler(ILogEvent logEvent);
 
         private static LoggingManager _instance;
@@ -57,6 +64,12 @@ namespace Colorcrush.Logging
 
         private void Awake()
         {
+            if (FireBaseInit.isReady)
+            {
+                _db = FirebaseFirestore.DefaultInstance;
+                _participantId = SystemInfo.deviceUniqueIdentifier; // Or however you track participants
+            }
+
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
@@ -219,51 +232,15 @@ namespace Colorcrush.Logging
         {
             while (true)
             {
-                yield return new WaitForSeconds(2f);
+                yield return new WaitForSeconds(ProjectConfig.InstanceConfig.logSaveInterval);
                 SaveLog();
             }
         }
-        private string webhookUrl = "https://webhook.site/2b571ca0-d99c-45b2-b5e3-f9a1e7ca300d";
-        long timestamp;
-        ILogEvent logEvent;
-        string messageToSend="";
-        public void LogColorTrial(List<string> log)
-        {
-            Debug.Log("before json" + log);
-            //string json = JsonUtility.ToJson(log);
-            //Debug.Log("Sending log to server: " + json);
 
-            string messageToSend = string.Join("\n", log);
-            Debug.Log("Sending log to server:\n" + messageToSend);
-
-            StartCoroutine(SendData(messageToSend));
-        }
-
-
-        private IEnumerator SendData(string json)
-        {
-            using (UnityWebRequest www = new UnityWebRequest(webhookUrl, "POST"))
-            {
-                byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-
-                yield return www.SendWebRequest();
-
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError("Error sending data: " + www.error);
-                }
-                else
-                {
-                    Debug.Log("Data sent successfully!");
-                }
-            }
-        }
-        List<string> batch = new();
+        
         private void SaveLog()
         {
+            Debug.Log("Saving logs...");
             if (_eventQueue.Count == 0)
             {
                 return;
@@ -271,6 +248,7 @@ namespace Colorcrush.Logging
 
             try
             {
+                var batchList = new List<string>();
                 while (_eventQueue.Count > 0)
                 {
                     var (timestamp, logEvent) = _eventQueue.Dequeue();
@@ -278,19 +256,30 @@ namespace Colorcrush.Logging
                     var logEntry = string.IsNullOrEmpty(stringifiedData)
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
-                    batch.Add(logEntry);
-                    
 
+                    batchList.Add(logEntry);
 
                     //SendToServer.LogColorTrial(logEntry);
 
                     _logWriter.WriteLine(logEntry);
                 }
 
-                LogColorTrial(batch);
-                batch.Clear();
                 _logWriter.Flush();
+
+                if (_db != null)
+                {
+                    SendLogsToFirebase(batchList);
+                }
+                else
+                {
+                    Debug.LogWarning("LoggingManager: Firebase not initialized. Skipping upload.");
+                }
+
+
             }
+
+
+
             catch (Exception e)
             {
                 Debug.LogError($"LoggingManager: Error saving log: {e.Message}");
@@ -348,5 +337,28 @@ namespace Colorcrush.Logging
 
             return logLines;
         }
+        private void SendLogsToFirebase(List<string> batch)
+        {
+            Debug.Log("Sending logs to Firebase...");
+            var logDoc = new Dictionary<string, object>
+    {
+        { "timestamp", DateTime.UtcNow.ToString("o") },
+        { "deviceId", _participantId },
+        { "sessionFile", Path.GetFileName(_currentLogFilePath) },
+        { "events", batch }
+    };
+
+            _db.Collection("logs")
+                .AddAsync(logDoc)
+                .ContinueWithOnMainThread(task =>
+                {
+                    if (task.IsCompletedSuccessfully)
+                        Debug.Log($"✅ Uploaded {batch.Count} logs to Firestore.");
+                    else
+                        Debug.LogError($"❌ Firebase upload failed: {task.Exception}");
+                });
+        }
+
     }
+
 }
