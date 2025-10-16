@@ -5,7 +5,7 @@ using UnityEngine;
 public class TutorialHandler : MonoBehaviour
 {
 
-    [SerializeField] static bool tutorialTaken = false;
+    static bool tutorialTaken = false;
     [SerializeField] GameObject tutorialEmptyGameobject;
     [SerializeField] GameObject welcome;
     [SerializeField] GameObject clickToSelect;

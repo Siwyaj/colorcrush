@@ -1024,6 +1024,7 @@ namespace Colorcrush.Game
         private void OnSubmitButtonClicked()
         {
             var targetColor = TargetColors[_selectedLevelIndex];
+            FirebaseLogger.currentColorDatabase = targetColor;
             PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
             PlayerPrefs.Save();
 

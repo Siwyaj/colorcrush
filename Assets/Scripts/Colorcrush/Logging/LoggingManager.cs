@@ -248,7 +248,6 @@ namespace Colorcrush.Logging
 
             try
             {
-                var batchList = new List<string>();
                 while (_eventQueue.Count > 0)
                 {
                     var (timestamp, logEvent) = _eventQueue.Dequeue();
@@ -257,23 +256,14 @@ namespace Colorcrush.Logging
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
 
-                    batchList.Add(logEntry);
 
                     //SendToServer.LogColorTrial(logEntry);
-
+                    FirebaseLogger.AppendColorData(logEntry);
                     _logWriter.WriteLine(logEntry);
                 }
 
                 _logWriter.Flush();
 
-                if (_db != null)
-                {
-                    SendLogsToFirebase(batchList);
-                }
-                else
-                {
-                    Debug.LogWarning("LoggingManager: Firebase not initialized. Skipping upload.");
-                }
 
 
             }
@@ -336,27 +326,6 @@ namespace Colorcrush.Logging
             }
 
             return logLines;
-        }
-        private void SendLogsToFirebase(List<string> batch)
-        {
-            Debug.Log("Sending logs to Firebase...");
-            var logDoc = new Dictionary<string, object>
-    {
-        { "timestamp", DateTime.UtcNow.ToString("o") },
-        { "deviceId", _participantId },
-        { "sessionFile", Path.GetFileName(_currentLogFilePath) },
-        { "events", batch }
-    };
-
-            _db.Collection("logs")
-                .AddAsync(logDoc)
-                .ContinueWithOnMainThread(task =>
-                {
-                    if (task.IsCompletedSuccessfully)
-                        Debug.Log($"✅ Uploaded {batch.Count} logs to Firestore.");
-                    else
-                        Debug.LogError($"❌ Firebase upload failed: {task.Exception}");
-                });
         }
 
     }

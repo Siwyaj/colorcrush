@@ -1,50 +1,79 @@
+﻿using Firebase;
+using Firebase.Database;
+using Firebase.Extensions;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Firebase;
-using Firebase.Extensions;
+using Colorcrush.Game;
+
 
 public class FireBaseInit : MonoBehaviour
 {
+    public static FirebaseDatabase Database;
     private static FireBaseInit _instance;
-
     public static bool isReady = false;
+
+
     private void Awake()
     {
-        Debug.Log("Firebase Init Awake");
-        if (_instance != null && _instance != this)
         {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            _instance = this;
-            DontDestroyOnLoad(this.gameObject);
-        }
-        InitializeFirebase();
-        isReady = true;
-
-    }
-    private void InitializeFirebase()
-    {
-        Firebase.FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
-            var dependencyStatus = task.Result;
-            if (dependencyStatus == Firebase.DependencyStatus.Available)
+            if (_instance == null)
             {
-                Debug.Log("Firebase DependencyStatus: Available");
-                // Create and hold a reference to your FirebaseApp,
-                // where app is a Firebase.FirebaseApp property of your application class.
-                FirebaseApp app = Firebase.FirebaseApp.DefaultInstance;
+                _instance = this;
+                DontDestroyOnLoad(gameObject); //Keeps it alive between scenes
+                InitializeFirebase();
+                isReady = true;
+                CreateOrFindLogger();
 
-                // Set a flag here to indicate whether Firebase is ready to use by your app.
             }
             else
             {
-                Debug.Log("Firebase DependencyStatus: Not Available");
-                UnityEngine.Debug.LogError(System.String.Format(
-                  "Could not resolve all Firebase dependencies: {0}", dependencyStatus));
-                // Firebase Unity SDK is not safe to use here.
+                Destroy(gameObject); //Prevent duplicates if scene reloads
+            }
+        }
+    }
+
+
+    private void InitializeFirebase()
+    {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
+            var dependencyStatus = task.Result;
+            if (dependencyStatus == DependencyStatus.Available)
+            {
+                FirebaseApp app = FirebaseApp.DefaultInstance;
+                Database = FirebaseDatabase.DefaultInstance;
+                Debug.Log("Firebase is initialized and persistent across scenes!");
+            }
+            else
+            {
+                Debug.LogError($"Could not resolve Firebase dependencies: {dependencyStatus}");
             }
         });
     }
+
+    
+    private void CreateOrFindLogger()
+    {
+        // Check if there’s already a logger in the scene
+        FirebaseLogger logger = FindObjectOfType<FirebaseLogger>();
+
+        if (logger == null)
+        {
+            // 🔹 Create a new GameObject and attach the script
+            GameObject loggerObj = new GameObject("FirebaseLogger");
+            logger = loggerObj.AddComponent<FirebaseLogger>();
+            DontDestroyOnLoad(loggerObj);
+            Debug.Log("FirebaseLogger created automatically.");
+        }
+        else
+        {
+            // 🔹 Just make sure it persists
+            DontDestroyOnLoad(logger.gameObject);
+            Debug.Log("Existing FirebaseLogger found and marked DontDestroyOnLoad.");
+        }
+
+        //FirebaseLogger.dbRef = FirebaseDatabase.DefaultInstance.RootReference;
+    }
+
 }

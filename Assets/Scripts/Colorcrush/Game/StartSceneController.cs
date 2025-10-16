@@ -15,6 +15,7 @@ using static Colorcrush.Animation.AnimationManager;
 using static Colorcrush.Util.AudioManager;
 using static Colorcrush.Util.ShaderManager;
 
+
 #endregion
 
 namespace Colorcrush.Game
@@ -166,6 +167,8 @@ namespace Colorcrush.Game
             _startTime = Time.time;
         }
 
+
+
         private void Update()
         {
             var elapsedTime = Time.time - _startTime;
@@ -284,6 +287,10 @@ namespace Colorcrush.Game
             {
                 Debug.Log("Showing consent image.");
                 consentImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                SceneManager.LoadSceneAsync(recurringStartupScene, SceneManager.ActivateLoadedScene);
             }
 
             //SceneManager.LoadSceneAsync(ProgressManager.CompletedTargetColors.Count > 0 ? recurringStartupScene : freshStartupScene, SceneManager.ActivateLoadedScene);
