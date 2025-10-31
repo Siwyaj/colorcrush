@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="x5-orientation" content="portrait">
+
+    <link rel="stylesheet" href="TemplateData/style.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* no scrollbars */
+            width: 100%;
+            height: 100%;
+            background: black; /* optional */
+        }
+
+        #unity-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* maintain aspect ratio */
+        }
+    </style>
+
+
+
+    <!-- Firebase SDK (for WebGL Firestore integration) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // 🔹 Replace these with your Firebase project config values
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCgfCCpZ-tc2PSA2JEW9AfU42gCge_ENo",
+            authDomain: "color-crush-374a7.firebaseapp.com",
+            databaseURL: "https://color-crush-374a7-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "color-crush-374a7",
+            storageBucket: "color-crush-374a7.firebasestorage.app",
+            messagingSenderId: "799842586127",
+            appId: "1:799842586127:web:9fd2d6698438b16bf25d7a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function maintainPortraitAspect() {
+            const targetAspect = 9 / 16;
+            const canvas = document.getElementById('unity-canvas');
+            const container = document.getElementById('unity-container');
+
+            const windowAspect = window.innerWidth / window.innerHeight;
+            let width, height;
+
+            if (windowAspect > targetAspect) {
+                // Window too wide → fit height
+                height = window.innerHeight;
+                width = height * targetAspect;
+            } else {
+                // Window too tall → fit width
+                width = window.innerWidth;
+                height = width / targetAspect;
+            }
+
+            canvas.style.width = width + "px";
+            canvas.style.height = height + "px";
+        }
+
+        window.addEventListener('resize', maintainPortraitAspect);
+        window.addEventListener('load', maintainPortraitAspect);
+    </script>
+</head>
+
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas" tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      var config = {
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_WASM
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      };
+        // Dynamically resize Unity canvas to fit the window
+        function resizeUnityCanvas() {
+            const canvas = document.querySelector("#unity-canvas");
+            canvas.style.width = window.innerWidth + "px";
+            canvas.style.height = window.innerHeight + "px";
+        }
+
+        // Resize when the page loads or the window changes size
+        window.addEventListener("resize", resizeUnityCanvas);
+        window.addEventListener("orientationchange", resizeUnityCanvas);
+        window.addEventListener("load", resizeUnityCanvas);
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(document.getElementById("unity-canvas"), config, (progress) => {
+          document.getElementById("unity-progress-bar-full").style.width = (100 * progress) + "%";
+        }).then((unityInstance) => {
+          document.getElementById("unity-loading-bar").style.display = "none";
+          maintainPortraitAspect(); // Apply sizing immediately after load
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+</body>
+</html>

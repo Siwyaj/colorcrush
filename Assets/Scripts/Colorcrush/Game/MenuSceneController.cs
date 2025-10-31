@@ -146,6 +146,8 @@ namespace Colorcrush.Game
         private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
 
+
+
         private void Awake()
         {
             // Try to find components if not assigned
@@ -180,7 +182,7 @@ namespace Colorcrush.Game
             {
                 _colorAnalysisOriginalPosition = colorAnalysisImage.rectTransform.anchoredPosition;
                 // Assuming the image is circular, the radius is half the width or height
-                _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
+                _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2.2f;//changed from 2 to 2.1 as the image was a bit bigger than the web area - Jesper 
             }
 
             if (SceneManager.GetPreviousSceneName() != "StartScene")
@@ -323,7 +325,7 @@ namespace Colorcrush.Game
                     }
 
                     _isDraggingColorAnalysisImage = true;
-                    colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
+                    colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -900);//changed from -800 to -900 to fit - Jesper
 
                     if (_colorViewInstance == null)
                     {
@@ -368,7 +370,8 @@ namespace Colorcrush.Game
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out var localPoint))
                 {
                     // Calculate the vector from the original center of the analysis image to the mouse position
-                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, 1389);
+                    var dragCenter = _colorAnalysisOriginalPosition;//+ new Vector2(0, 1300)
+
                     var dragVector = localPoint - dragCenter;
 
                     // Clamp the magnitude of the drag vector to the radius of the analysis image

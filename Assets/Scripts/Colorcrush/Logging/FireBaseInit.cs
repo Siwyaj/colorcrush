@@ -1,6 +1,8 @@
-﻿using Firebase;
+﻿#if !UNITY_WEBGL || UNITY_EDITOR
+using Firebase;
 using Firebase.Database;
 using Firebase.Extensions;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +11,9 @@ using Colorcrush.Game;
 
 public class FireBaseInit : MonoBehaviour
 {
+#if !UNITY_WEBGL || UNITY_EDITOR
     public static FirebaseDatabase Database;
+#endif
     private static FireBaseInit _instance;
     public static bool isReady = false;
 
@@ -36,6 +40,9 @@ public class FireBaseInit : MonoBehaviour
 
     private void InitializeFirebase()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        Debug.Log("WebGL build detected: Firebase SDK initialization skipped (uses JS bridge).");
+#else
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
         {
             var dependencyStatus = task.Result;
@@ -50,6 +57,7 @@ public class FireBaseInit : MonoBehaviour
                 Debug.LogError($"Could not resolve Firebase dependencies: {dependencyStatus}");
             }
         });
+#endif
     }
 
     
@@ -72,8 +80,6 @@ public class FireBaseInit : MonoBehaviour
             DontDestroyOnLoad(logger.gameObject);
             Debug.Log("Existing FirebaseLogger found and marked DontDestroyOnLoad.");
         }
-
-        //FirebaseLogger.dbRef = FirebaseDatabase.DefaultInstance.RootReference;
     }
 
 }

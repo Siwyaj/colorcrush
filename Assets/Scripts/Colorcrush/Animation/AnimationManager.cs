@@ -62,7 +62,7 @@ namespace Colorcrush.Animation
                     }
                     catch (InvalidOperationException e)
                     {
-                        Debug.Log($"AnimationManager: Animation.Play threw an InvalidOperationException for {state.CustomAnimator.name}: {e.Message} - Treating animation as finished.");
+                        //Debug.Log($"AnimationManager: Animation.Play threw an InvalidOperationException for {state.CustomAnimator.name}: {e.Message} - Treating animation as finished.");
                         completedStates.Add(state);
                         continue;
                     }
@@ -110,11 +110,11 @@ namespace Colorcrush.Animation
             {
                 states = new List<AnimationState>();
                 Instance._activeAnimations[animation] = states;
-                Debug.Log($"AnimationManager: Created new animation state for {animation.GetType().Name}");
+                //Debug.Log($"AnimationManager: Created new animation state for {animation.GetType().Name}");
             }
             else
             {
-                Debug.Log($"AnimationManager: Using existing animation state for {animation.GetType().Name}");
+                //Debug.Log($"AnimationManager: Using existing animation state for {animation.GetType().Name}");
             }
 
             var count = 0;

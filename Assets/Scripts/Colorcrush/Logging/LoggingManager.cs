@@ -10,9 +10,7 @@ using System.Linq;
 //using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 //using UnityEditor.VersionControl;
 using UnityEngine;
-using Firebase;
-using Firebase.Firestore;
-using Firebase.Extensions;
+
 
 // ReSharper disable StringLiteralTypo
 
@@ -22,10 +20,9 @@ namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {
-        private FirebaseFirestore _db;
         private string _participantId;
 
-
+        public static bool isTutorial = true;
 
         public delegate void LogEventQueuedHandler(ILogEvent logEvent);
 
@@ -64,12 +61,6 @@ namespace Colorcrush.Logging
 
         private void Awake()
         {
-            if (FireBaseInit.isReady)
-            {
-                _db = FirebaseFirestore.DefaultInstance;
-                _participantId = SystemInfo.deviceUniqueIdentifier; // Or however you track participants
-            }
-
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
@@ -233,13 +224,20 @@ namespace Colorcrush.Logging
             while (true)
             {
                 yield return new WaitForSeconds(ProjectConfig.InstanceConfig.logSaveInterval);
-                SaveLog();
+                if (!isTutorial)
+                {
+                    SaveLog();
+                }
             }
         }
-
         
         private void SaveLog()
         {
+            if (isTutorial)
+            {
+                Debug.Log("LoggingManager: In tutorial mode, not saving logs.");
+                return;
+            }
             Debug.Log("Saving logs...");
             if (_eventQueue.Count == 0)
             {
@@ -272,7 +270,9 @@ namespace Colorcrush.Logging
 
             catch (Exception e)
             {
+                
                 Debug.LogError($"LoggingManager: Error saving log: {e.Message}");
+
             }
         }
 

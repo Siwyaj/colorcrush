@@ -18,7 +18,6 @@ public class FirstTimeLaunchManager : MonoBehaviour
     [SerializeField] private TMP_InputField visionDeficiency;
     [SerializeField] private TMP_InputField colorBlind;
 
-
     FirebaseLogger logger;
 
     public void ConsentAllowButton()
@@ -36,13 +35,14 @@ public class FirstTimeLaunchManager : MonoBehaviour
         Debug.Log("User denied consent. Exiting application.");
         Application.Quit();
     }
-    public void SubmitDemographicDataButton()
+    public void SubmitDemographicDataButton()//now unused
     {
         demographicData["age"] = ageInputField.text;
         demographicData["biologicalGender"] = bGenderField.text;
         demographicData["eyeColor"] = eyeColor.text;
         demographicData["visionDeficiency"] = visionDeficiency.text;
         demographicData["colorBlind"] = colorBlind.text;
+        Debug.Log("Demographic data:"+ demographicData);
         logger.WriteDemographicDataToDatabase(demographicData);
         demographicImage.gameObject.SetActive(false);
         SceneManager.LoadSceneAsync("TutorialScene", SceneManager.ActivateLoadedScene);

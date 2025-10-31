@@ -57,8 +57,8 @@ namespace Colorcrush.Util
 
         public static void InitializeEmojiQueues()
         {
-            Instance._happyEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.happyEmojiFolder);
-            Instance._sadEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.sadEmojiFolder);
+            Instance._happyEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.happyEmojiFolder); //D:\colorcrush\Assets\Resources\Colorcrush\Emoji\Happy
+            Instance._sadEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.sadEmojiFolder); //D:\colorcrush\Assets\Resources\Colorcrush\Emoji\Sad
         }
 
         private static Queue<Sprite> CreateEmojiQueue(string folderPath)

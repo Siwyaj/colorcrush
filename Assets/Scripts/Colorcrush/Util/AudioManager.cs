@@ -160,7 +160,7 @@ namespace Colorcrush.Util
                     }
 
                     audioSource.Play();
-                    Debug.Log($"AudioManager: Playing sound: {soundName} with volume: {finalVolume} and pitch: {audioSource.pitch}");
+                    //Debug.Log($"AudioManager: Playing sound: {soundName} with volume: {finalVolume} and pitch: {audioSource.pitch}");
                 }
                 else
                 {

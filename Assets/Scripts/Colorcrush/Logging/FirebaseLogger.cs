@@ -1,30 +1,45 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿#if !UNITY_WEBGL || UNITY_EDITOR
 using Firebase.Firestore;
 using Firebase.Extensions;
-using Colorcrush.Game;
+#endif
+
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using System.Runtime.InteropServices;
 
 public class FirebaseLogger : MonoBehaviour
 {
     private const string UserIdKey = "user_id";
     private static string userId;
-    private static FirebaseFirestore firestore;
     public static Color currentColorDatabase;
-
+#if !UNITY_WEBGL || UNITY_EDITOR
+    private static FirebaseFirestore firestore;
+#endif
     private void Awake()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        GetOrCreateUserId();
+#else
         InitializeFirebase();
-    }
+#endif
+        }
 
     private void InitializeFirebase()
     {
+#if !UNITY_WEBGL || UNITY_EDITOR
         firestore = FirebaseFirestore.DefaultInstance;
+#endif
         GetOrCreateUserId();
     }
 
     public static void CreateUserInDatabase()
     {
-        Debug.Log("Creating user in Firestore...");
+#if UNITY_WEBGL && !UNITY_EDITOR
+        JS_CreateUser(userId);
+#else
+#if !UNITY_WEBGL || UNITY_EDITOR
+        //Debug.Log("Creating user in Firestore...");
 
         Dictionary<string, object> userData = new Dictionary<string, object>
         {
@@ -32,23 +47,20 @@ public class FirebaseLogger : MonoBehaviour
             { "createdAt", System.DateTime.UtcNow.ToString("o") }
         };
 
-        DocumentReference userDoc = firestore.Collection("users").Document(userId);
-        userDoc.SetAsync(userData).ContinueWithOnMainThread(task =>
+        firestore.Collection("users").Document(userId).SetAsync(userData).ContinueWithOnMainThread(task =>
         {
             if (task.IsFaulted)
-            {
                 Debug.LogError($"Failed to create user: {task.Exception}");
-            }
             else
-            {
                 Debug.Log($"User {userId} successfully created in Firestore.");
-                CreateColorInDatabase();
-            }
         });
+#endif
+#endif
     }
-
+    /*
     private static void CreateColorInDatabase()
     {
+
         CollectionReference colorsRef = firestore
             .Collection("users")
             .Document(userId)
@@ -71,50 +83,75 @@ public class FirebaseLogger : MonoBehaviour
             });
         }
     }
+    */
 
     public void WriteDemographicDataToDatabase(Dictionary<string, string> demographicData)
     {
         Debug.Log("Writing demographic data to Firestore...");
 
-        firestore.Collection("users")
-            .Document(userId)
-            .Collection("demographics")
-            .AddAsync(demographicData)
-            .ContinueWithOnMainThread(task =>
-            {
-                if (task.IsFaulted)
-                    Debug.LogError($"Failed to write demographic data: {task.Exception}");
-                else
-                    Debug.Log($"Demographic data for user {userId} successfully written to Firestore.");
-            });
+#if UNITY_WEBGL && !UNITY_EDITOR
+        // Convert dictionary to JSON for JavaScript bridge
+        string jsonData = JsonUtility.ToJson(new SerializableDictionary<string, string>(demographicData));
+        JS_WriteDemographicData(userId, jsonData);
+#else
+#if !UNITY_WEBGL || UNITY_EDITOR
+    firestore.Collection("users")
+        .Document(userId)
+        .Collection("demographics")
+        .AddAsync(demographicData)
+        .ContinueWithOnMainThread(task =>
+        {
+            if (task.IsFaulted)
+                Debug.LogError($"Failed to write demographic data: {task.Exception}");
+            else
+                Debug.Log($"Demographic data for user {userId} successfully written to Firestore.");
+        });
+#endif
+#endif
     }
+    [System.Serializable]
+    public class SerializableDictionary<TKey, TValue>
+    {
+        public List<TKey> keys = new List<TKey>();
+        public List<TValue> values = new List<TValue>();
+
+        public SerializableDictionary(Dictionary<TKey, TValue> dict)
+        {
+            foreach (var kvp in dict)
+            {
+                keys.Add(kvp.Key);
+                values.Add(kvp.Value);
+            }
+        }
+    }
+
 
     public static void AppendColorData(string logData)   
     {
 
-        Debug.Log("Appending color log data to Firestore...");
+        //Debug.Log("Appending color log data to Firestore...");
         string colorName = ColorUtility.ToHtmlStringRGB(currentColorDatabase);
-
-        Dictionary<string, object> logDataWithTime = new Dictionary<string, object>
+#if UNITY_WEBGL && !UNITY_EDITOR
+        JS_AppendColorLog(userId, colorName, logData);
+#else
+#if !UNITY_WEBGL || UNITY_EDITOR
+        Dictionary<string, object> update  = new Dictionary<string, object>
         {
             { "logs", FieldValue.ArrayUnion(logData) },
             { "timestamp", System.DateTime.UtcNow.ToString("o") }
         };
-        DocumentReference colorDocRef = firestore
-        .Collection("users")
-        .Document(userId)
-        .Collection("colors")
-        .Document(colorName);
-
-        colorDocRef.SetAsync(logDataWithTime, SetOptions.MergeAll).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsFaulted)
-                Debug.LogError($"Failed to append log for {colorName}: {task.Exception}");
-            else
-                Debug.Log($"Log entry added for color {colorName}.");
-        });
+        firestore.Collection("users").Document(userId)
+            .Collection("colors").Document(colorName)
+            .SetAsync(update, SetOptions.MergeAll).ContinueWithOnMainThread(task =>
+            {
+                if (task.IsFaulted)
+                    Debug.LogError($"Failed to append log for {colorName}: {task.Exception}");
+                else
+                    Debug.Log($"Log entry added for color {colorName}.");
+            });
+#endif
+#endif
     }
-
     public void GetOrCreateUserId()
     {
         if (!PlayerPrefs.HasKey(UserIdKey))
@@ -133,4 +170,15 @@ public class FirebaseLogger : MonoBehaviour
 
         CreateUserInDatabase();
     }
+#if UNITY_WEBGL && !UNITY_EDITOR
+    [DllImport("__Internal")]
+    private static extern void JS_CreateUser(string userId);
+
+    [DllImport("__Internal")]
+    private static extern void JS_AppendColorLog(string userId, string colorName, string logData);
+
+    [DllImport("__Internal")]
+    private static extern void JS_WriteDemographicData(string userId, string jsonData);
+
+#endif
 }

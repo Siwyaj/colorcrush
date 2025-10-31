@@ -96,6 +96,7 @@ namespace Colorcrush.Game
         private bool _targetReached;
         private CustomAnimator targetEmojiCustomAnimator;
 
+
         private void Awake()
         {
             // Get the target color from PlayerPrefs
@@ -133,6 +134,12 @@ namespace Colorcrush.Game
         {
             _colorExperiment = BeginColorExperiment(new ColorObject(_targetColor));
             (_currentBatch, _hasMoreBatches) = _colorExperiment.GetNextColorBatch(null, null);
+        }
+
+        public void TutorialEndColorExperiment()
+        {
+            Debug.Log("TutorialEndColorExperiment() ran");
+            NoMoreBatches();
         }
 
         private IEnumerator GameLoop()
@@ -379,7 +386,7 @@ namespace Colorcrush.Game
                 return;
             }
 
-            _buttonToggledStates[index] = !_buttonToggledStates[index];
+            _buttonToggledStates[index] = !_buttonToggledStates[index]; //smart
             var alpha = _buttonToggledStates[index] ? toggledAlpha : defaultAlpha;
             SetShaderFloat(_selectionGridImages[index].gameObject, "_Alpha", alpha);
 
@@ -442,21 +449,26 @@ namespace Colorcrush.Game
 
             if (!_hasMoreBatches)
             {
-                _targetReached = true;
-                foreach (var button in _selectionGridButtons)
-                {
-                    button.gameObject.SetActive(false);
-                }
-
-                // Set the target emoji to the reward emoji
-                var emoji = EmojiManager.GetRewardEmojiForColor(_targetColor);
-                _targetEmojiImage.sprite = emoji;
-                LoggingManager.LogEvent(new EmojiRewardedEvent(emoji.name));
+                NoMoreBatches();
             }
             else
             {
                 StartCoroutine(ShowHappyEmojiCoroutine());
             }
+        }
+
+        private void NoMoreBatches()
+        {
+            _targetReached = true;
+            foreach (var button in _selectionGridButtons)
+            {
+                button.gameObject.SetActive(false);
+            }
+
+            // Set the target emoji to the reward emoji
+            var emoji = EmojiManager.GetRewardEmojiForColor(_targetColor);
+            _targetEmojiImage.sprite = emoji;
+            LoggingManager.LogEvent(new EmojiRewardedEvent(emoji.name));
         }
 
         private IEnumerator AnimateEmojisAndResetButtons(int buttonsInPreviousBatch)
